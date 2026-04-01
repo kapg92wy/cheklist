@@ -1,179 +1,179 @@
 import streamlit as st
 from PIL import Image
-import io
-import base64
 from datetime import datetime
 import json
-import os
 
 # ─────────────────────────────────────────────
-# CONFIGURACIÓN DE PÁGINA
+# CONFIGURACIÓN — layout centered es mejor en móvil
 # ─────────────────────────────────────────────
 st.set_page_config(
     page_title="Checklist Mini Garra",
     page_icon="🎮",
-    layout="wide",
-    initial_sidebar_state="expanded",
+    layout="centered",
+    initial_sidebar_state="collapsed",
 )
 
 # ─────────────────────────────────────────────
-# ESTILOS CSS
+# CSS
 # ─────────────────────────────────────────────
 st.markdown("""
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&family=Nunito:wght@400;600;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=Nunito:wght@400;600;800&display=swap');
 
-    html, body, [class*="css"] {
-        font-family: 'Nunito', sans-serif;
-    }
+html, body, [class*="css"] {
+    font-family: 'Nunito', sans-serif;
+    background-color: #0d0d1a;
+    color: #e8e8f0;
+}
+h1,h2,h3,h4 { font-family: 'Rajdhani', sans-serif; letter-spacing: 1px; }
 
-    h1, h2, h3 {
-        font-family: 'Rajdhani', sans-serif;
-        letter-spacing: 1px;
-    }
+section[data-testid="stSidebar"] {
+    background: linear-gradient(180deg,#1a1a2e,#16213e);
+    border-right: 2px solid #e94560;
+}
 
-    .main { background-color: #0f0f1a; color: #e8e8f0; }
+.maquina-banner {
+    background: linear-gradient(135deg,#0f3460,#16213e);
+    border: 2px solid #e94560;
+    border-radius: 14px;
+    padding: 16px 20px;
+    margin: 12px 0 20px 0;
+    text-align: center;
+}
+.maquina-banner h2 { color: #e94560; font-size: 22px; margin: 0; letter-spacing: 2px; }
+.maquina-banner p { color: #a0a0c0; margin: 6px 0 0 0; font-size: 13px; }
 
-    /* Sidebar */
-    section[data-testid="stSidebar"] {
-        background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
-        border-right: 2px solid #e94560;
-    }
-    section[data-testid="stSidebar"] .stRadio label {
-        color: #e8e8f0 !important;
-        font-size: 15px;
-        font-weight: 600;
-    }
+.casilla-card {
+    background: linear-gradient(135deg,#1a1a2e,#1f2040);
+    border: 1px solid #2a2a4a;
+    border-left: 5px solid #e94560;
+    border-radius: 14px;
+    padding: 18px 16px;
+    margin-bottom: 24px;
+}
 
-    /* Tarjetas de casilla */
-    .casilla-card {
-        background: linear-gradient(135deg, #1a1a2e 0%, #1f2040 100%);
-        border: 1px solid #2a2a4a;
-        border-left: 4px solid #e94560;
-        border-radius: 12px;
-        padding: 20px;
-        margin-bottom: 18px;
-        box-shadow: 0 4px 20px rgba(233,69,96,0.12);
-    }
+.casilla-header {
+    background: linear-gradient(90deg,#e94560,#c23152);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 10px;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    margin-bottom: 18px;
+    display: block;
+    text-align: center;
+}
 
-    .casilla-header {
-        background: linear-gradient(90deg, #e94560, #c23152);
-        color: white;
-        padding: 10px 18px;
-        border-radius: 8px;
-        font-family: 'Rajdhani', sans-serif;
-        font-size: 20px;
-        font-weight: 700;
-        letter-spacing: 2px;
-        margin-bottom: 16px;
-        display: inline-block;
-    }
+.sec {
+    color: #e94560;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    border-bottom: 1px solid #2a2a4a;
+    padding-bottom: 4px;
+    margin: 18px 0 10px 0;
+    text-transform: uppercase;
+}
 
-    .seccion-titulo {
-        color: #e94560;
-        font-family: 'Rajdhani', sans-serif;
-        font-size: 17px;
-        font-weight: 700;
-        letter-spacing: 1px;
-        border-bottom: 1px solid #2a2a4a;
-        padding-bottom: 4px;
-        margin: 14px 0 8px 0;
-        text-transform: uppercase;
-    }
+.contador-bloque {
+    background: #13132a;
+    border: 1px solid #2a2a4a;
+    border-radius: 10px;
+    padding: 14px 14px 6px 14px;
+    margin-bottom: 12px;
+}
+.contador-label {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+}
+.lbl-mec { color: #f4a261; }
+.lbl-dig { color: #56cfe1; }
 
-    .maquina-banner {
-        background: linear-gradient(90deg, #0f3460, #16213e);
-        border: 2px solid #e94560;
-        border-radius: 14px;
-        padding: 18px 28px;
-        margin: 16px 0 24px 0;
-        text-align: center;
-    }
-    .maquina-banner h2 {
-        color: #e94560;
-        font-size: 28px;
-        margin: 0;
-        letter-spacing: 3px;
-    }
-    .maquina-banner p {
-        color: #a0a0c0;
-        margin: 4px 0 0 0;
-        font-size: 14px;
-    }
+.prueba-box {
+    background: linear-gradient(135deg,#1a2e1a,#1f401f);
+    border: 1px solid #2a4a2a;
+    border-left: 5px solid #4caf50;
+    border-radius: 10px;
+    padding: 14px;
+    margin-top: 10px;
+}
 
-    .resumen-box {
-        background: #1a1a2e;
-        border: 1px solid #2a2a4a;
-        border-top: 3px solid #e94560;
-        border-radius: 10px;
-        padding: 16px 20px;
-        margin: 10px 0;
-    }
+.resumen-box {
+    background: #12122a;
+    border: 1px solid #2a2a4a;
+    border-top: 3px solid #e94560;
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-top: 14px;
+    line-height: 2.2;
+}
+.chip {
+    display: inline-block;
+    border-radius: 20px;
+    padding: 2px 12px;
+    font-size: 12px;
+    font-weight: 700;
+    margin: 2px 3px;
+    color: white;
+}
+.chip-red { background: #e94560; }
+.chip-green { background: #2d6a4f; }
+.chip-blue { background: #1d6fa4; }
 
-    .stat-chip {
-        display: inline-block;
-        background: #e94560;
-        color: white;
-        border-radius: 20px;
-        padding: 3px 12px;
-        font-size: 13px;
-        font-weight: 700;
-        margin: 2px 4px;
-    }
+/* Inputs grandes para dedo — evita zoom en iOS */
+.stTextInput > div > input,
+.stNumberInput > div > input {
+    background: #0d0d1a !important;
+    color: #e8e8f0 !important;
+    border: 1px solid #3a3a5a !important;
+    border-radius: 10px !important;
+    font-size: 16px !important;
+    padding: 10px 14px !important;
+    min-height: 46px !important;
+}
+div[data-testid="stFileUploader"] {
+    background: #1a1a2e;
+    border: 1.5px dashed #e94560 !important;
+    border-radius: 10px;
+}
+.stCheckbox > label { font-size: 15px !important; }
 
-    .prueba-box {
-        background: linear-gradient(135deg, #1a2e1a 0%, #1f401f 100%);
-        border: 1px solid #2a4a2a;
-        border-left: 4px solid #4caf50;
-        border-radius: 10px;
-        padding: 16px;
-        margin-top: 12px;
-    }
+.stButton > button {
+    background: linear-gradient(90deg,#e94560,#c23152) !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 10px !important;
+    font-family: 'Rajdhani', sans-serif !important;
+    font-weight: 700 !important;
+    font-size: 18px !important;
+    letter-spacing: 1px !important;
+    padding: 14px 24px !important;
+    width: 100% !important;
+}
 
-    /* Inputs */
-    .stTextInput > div > input,
-    .stNumberInput > div > input {
-        background: #0f0f1a !important;
-        color: #e8e8f0 !important;
-        border: 1px solid #2a2a4a !important;
-        border-radius: 8px !important;
-    }
+/* Tabs grandes para dedo */
+.stTabs [data-baseweb="tab"] {
+    font-family: 'Rajdhani', sans-serif !important;
+    font-size: 20px !important;
+    font-weight: 700 !important;
+    letter-spacing: 3px !important;
+    padding: 12px 20px !important;
+}
 
-    .stCheckbox label { color: #e8e8f0 !important; }
-
-    .stSelectbox > div { background: #1a1a2e; }
-
-    div[data-testid="stFileUploader"] {
-        background: #1a1a2e;
-        border: 1px dashed #e94560 !important;
-        border-radius: 10px;
-    }
-
-    .stButton > button {
-        background: linear-gradient(90deg, #e94560, #c23152) !important;
-        color: white !important;
-        border: none !important;
-        border-radius: 8px !important;
-        font-family: 'Rajdhani', sans-serif !important;
-        font-weight: 700 !important;
-        font-size: 16px !important;
-        letter-spacing: 1px !important;
-        padding: 10px 28px !important;
-        transition: all 0.2s ease !important;
-    }
-    .stButton > button:hover {
-        transform: translateY(-2px) !important;
-        box-shadow: 0 6px 20px rgba(233,69,96,0.4) !important;
-    }
-
-    .footer-logo {
-        text-align: center;
-        color: #444466;
-        font-family: 'Rajdhani', sans-serif;
-        font-size: 13px;
-        margin-top: 40px;
-        letter-spacing: 2px;
-    }
+.footer-logo {
+    text-align: center;
+    color: #333355;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 12px;
+    margin-top: 36px;
+    letter-spacing: 2px;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -181,224 +181,210 @@ st.markdown("""
 # ─────────────────────────────────────────────
 # HELPERS
 # ─────────────────────────────────────────────
-def foto_input(label, key):
-    """Subida de foto con previsualización compacta."""
-    uploaded = st.file_uploader(f"📷 {label}", type=["jpg","jpeg","png","webp"], key=key)
-    if uploaded:
-        img = Image.open(uploaded)
-        st.image(img, use_column_width=True, caption=label)
-        return uploaded
-    return None
+def foto_input(label: str, key: str):
+    up = st.file_uploader(f"📷 {label}", type=["jpg","jpeg","png","webp"], key=key)
+    if up:
+        st.image(Image.open(up), use_column_width=True, caption=label)
+    return up
 
 
-def casilla_form(maquina_id: str, casilla_num: int):
-    """Renderiza el formulario completo de una casilla."""
-    key_prefix = f"m{maquina_id}_c{casilla_num}"
+def bloque_contador(titulo: str, clase: str, icono_str: str,
+                    key_num: str, key_foto: str, casilla: str, tipo: str):
+    """Bloque individual mecánico o digital, etiquetado por casilla."""
+    st.markdown(
+        f'<div class="contador-bloque">'
+        f'<div class="contador-label {clase}">{icono_str} {titulo} — Casilla {casilla}</div>',
+        unsafe_allow_html=True
+    )
+    val = st.number_input(
+        f"Contador {tipo} {titulo.lower()} — Casilla {casilla}",
+        min_value=0, step=1, key=key_num, label_visibility="collapsed"
+    )
+    foto_input(f"Foto {tipo} {titulo.lower()} — Casilla {casilla}", key_foto)
+    st.markdown('</div>', unsafe_allow_html=True)
+    return val
 
-    st.markdown(f'<div class="casilla-header">⬡ CASILLA {casilla_num}</div>', unsafe_allow_html=True)
 
-    # ── Número de serie ──────────────────────
-    st.markdown('<p class="seccion-titulo">📋 Identificación</p>', unsafe_allow_html=True)
-    col1, col2 = st.columns([2, 1])
-    with col1:
-        serie = st.text_input("Número de serie", key=f"{key_prefix}_serie",
-                              placeholder="Ej. SN-20241001-A")
-    with col2:
-        foto_input("Foto del número de serie", f"{key_prefix}_foto_serie")
+# ─────────────────────────────────────────────
+# FORMULARIO POR CASILLA
+# ─────────────────────────────────────────────
+def casilla_form(maquina_id: str, letra: str):
+    kp = f"m{maquina_id}_c{letra}"
 
-    # ── Vitrina ──────────────────────────────
-    st.markdown('<p class="seccion-titulo">🪟 Vitrina</p>', unsafe_allow_html=True)
-    foto_input("Foto de vitrina lista", f"{key_prefix}_foto_vitrina")
+    st.markdown(f'<div class="casilla-header">⬡ CASILLA {letra}</div>', unsafe_allow_html=True)
 
-    # ── Peluches ────────────────────────────
-    st.markdown('<p class="seccion-titulo">🧸 Peluches</p>', unsafe_allow_html=True)
-    col_a, col_b = st.columns(2)
-    with col_a:
-        peluches_deje = st.number_input("¿Cuántos peluches dejé?", min_value=0, step=1,
-                                        key=f"{key_prefix}_deje")
-    with col_b:
-        peluches_traje = st.number_input("¿Cuántos peluches traje?", min_value=0, step=1,
-                                         key=f"{key_prefix}_traje")
+    # 1 · Número de serie
+    st.markdown(f'<p class="sec">📋 Número de Serie — Casilla {letra}</p>', unsafe_allow_html=True)
+    serie = st.text_input(
+        f"Número de serie — Casilla {letra}",
+        key=f"{kp}_serie", placeholder=f"Ej. SN-2024-{letra}"
+    )
+    foto_input(f"Foto del número de serie — Casilla {letra}", f"{kp}_foto_serie")
 
-    # ── Foto general ─────────────────────────
-    st.markdown('<p class="seccion-titulo">📸 Foto General de la Máquina</p>', unsafe_allow_html=True)
-    foto_input("Foto general de la máquina", f"{key_prefix}_foto_general")
+    # 2 · Vitrina
+    st.markdown(f'<p class="sec">🪟 Vitrina Lista — Casilla {letra}</p>', unsafe_allow_html=True)
+    foto_input(f"Foto vitrina lista — Casilla {letra}", f"{kp}_foto_vitrina")
 
-    # ── Contadores de premios ─────────────────
-    st.markdown('<p class="seccion-titulo">🏆 Contador de Premios</p>', unsafe_allow_html=True)
-    col_p1, col_p2 = st.columns(2)
-    with col_p1:
-        st.markdown("**Mecánico**")
-        premios_mec = st.number_input("Contador premios mecánico", min_value=0, step=1,
-                                      key=f"{key_prefix}_premios_mec")
-        foto_input("Foto contador premios mecánico", f"{key_prefix}_foto_premios_mec")
-    with col_p2:
-        st.markdown("**Digital**")
-        premios_dig = st.number_input("Contador premios digital", min_value=0, step=1,
-                                      key=f"{key_prefix}_premios_dig")
-        foto_input("Foto contador premios digital", f"{key_prefix}_foto_premios_dig")
+    # 3 · Peluches
+    st.markdown(f'<p class="sec">🧸 Peluches — Casilla {letra}</p>', unsafe_allow_html=True)
+    p_deje  = st.number_input(f"Peluches que DEJÉ — Casilla {letra}",  min_value=0, step=1, key=f"{kp}_deje")
+    p_traje = st.number_input(f"Peluches que TRAJE — Casilla {letra}", min_value=0, step=1, key=f"{kp}_traje")
 
-    # ── Contadores de monedas ─────────────────
-    st.markdown('<p class="seccion-titulo">🪙 Contador de Monedas</p>', unsafe_allow_html=True)
-    col_m1, col_m2 = st.columns(2)
-    with col_m1:
-        st.markdown("**Mecánico**")
-        monedas_mec = st.number_input("Contador monedas mecánico", min_value=0, step=1,
-                                      key=f"{key_prefix}_monedas_mec")
-        foto_input("Foto contador monedas mecánico", f"{key_prefix}_foto_monedas_mec")
-    with col_m2:
-        st.markdown("**Digital**")
-        monedas_dig = st.number_input("Contador monedas digital", min_value=0, step=1,
-                                      key=f"{key_prefix}_monedas_dig")
-        foto_input("Foto contador monedas digital", f"{key_prefix}_foto_monedas_dig")
+    # 4 · Foto general
+    st.markdown(f'<p class="sec">📸 Foto General de la Máquina — Casilla {letra}</p>', unsafe_allow_html=True)
+    foto_input(f"Foto general de la máquina — Casilla {letra}", f"{kp}_foto_general")
 
-    # ── Pruebas (opcional) ───────────────────
-    st.markdown('<p class="seccion-titulo">🔧 Pruebas (Opcional)</p>', unsafe_allow_html=True)
-    hacer_prueba = st.checkbox("¿Se realizaron pruebas en esta casilla?",
-                               key=f"{key_prefix}_prueba_check")
+    # 5 · Contador de premios (mecánico + digital)
+    st.markdown(f'<p class="sec">🏆 Contador de Premios — Casilla {letra}</p>', unsafe_allow_html=True)
+    prem_mec = bloque_contador("Mecánico", "lbl-mec", "⚙️",
+                               f"{kp}_prem_mec", f"{kp}_fprem_mec", letra, "premios")
+    prem_dig = bloque_contador("Digital",  "lbl-dig", "💻",
+                               f"{kp}_prem_dig", f"{kp}_fprem_dig", letra, "premios")
 
+    # 6 · Contador de monedas (mecánico + digital)
+    st.markdown(f'<p class="sec">🪙 Contador de Monedas — Casilla {letra}</p>', unsafe_allow_html=True)
+    mon_mec = bloque_contador("Mecánico", "lbl-mec", "⚙️",
+                              f"{kp}_mon_mec", f"{kp}_fmon_mec", letra, "monedas")
+    mon_dig = bloque_contador("Digital",  "lbl-dig", "💻",
+                              f"{kp}_mon_dig", f"{kp}_fmon_dig", letra, "monedas")
+
+    # 7 · Pruebas (opcional)
+    st.markdown(f'<p class="sec">🔧 Pruebas (Opcional) — Casilla {letra}</p>', unsafe_allow_html=True)
+    hacer_prueba = st.checkbox(f"¿Se hicieron pruebas en Casilla {letra}?", key=f"{kp}_prueba_chk")
+
+    mon_antes = mon_despues = 0
     if hacer_prueba:
         st.markdown('<div class="prueba-box">', unsafe_allow_html=True)
-        st.markdown("#### Datos de prueba")
-        col_pr1, col_pr2 = st.columns(2)
-        with col_pr1:
-            st.markdown("**ANTES de prueba**")
-            monedas_antes = st.number_input("Contador monedas ANTES de prueba", min_value=0, step=1,
-                                            key=f"{key_prefix}_antes")
-            foto_input("Foto contador ANTES de prueba", f"{key_prefix}_foto_antes")
-        with col_pr2:
-            st.markdown("**DESPUÉS de prueba**")
-            monedas_despues = st.number_input("Contador monedas DESPUÉS de prueba", min_value=0, step=1,
-                                              key=f"{key_prefix}_despues")
-            foto_input("Foto contador DESPUÉS de prueba", f"{key_prefix}_foto_despues")
+        st.markdown(f"**📊 ANTES de prueba — Casilla {letra}**")
+        mon_antes = st.number_input(
+            f"Contador monedas ANTES de prueba — Casilla {letra}",
+            min_value=0, step=1, key=f"{kp}_antes"
+        )
+        foto_input(f"Foto contador ANTES de prueba — Casilla {letra}", f"{kp}_foto_antes")
 
-        if hacer_prueba:
-            diferencia = monedas_despues - monedas_antes
-            st.info(f"💡 Monedas consumidas en prueba: **{diferencia}**")
+        st.markdown(f"**📊 DESPUÉS de prueba — Casilla {letra}**")
+        mon_despues = st.number_input(
+            f"Contador monedas DESPUÉS de prueba — Casilla {letra}",
+            min_value=0, step=1, key=f"{kp}_despues"
+        )
+        foto_input(f"Foto contador DESPUÉS de prueba — Casilla {letra}", f"{kp}_foto_despues")
+
+        diferencia = mon_despues - mon_antes
+        st.success(f"💡 Monedas usadas en prueba — Casilla {letra}: **{diferencia}**")
         st.markdown('</div>', unsafe_allow_html=True)
 
-    # Resumen rápido de la casilla
-    st.markdown('<div class="resumen-box">', unsafe_allow_html=True)
+    # Resumen rápido
+    prueba_html = (
+        f"<br><span class='chip chip-green'>Prueba {letra}: {mon_antes}→{mon_despues} "
+        f"({mon_despues-mon_antes} monedas)</span>"
+        if hacer_prueba else ""
+    )
     st.markdown(f"""
-    <b>Resumen Casilla {casilla_num}</b><br>
-    <span class="stat-chip">Serie: {serie if serie else '—'}</span>
-    <span class="stat-chip">Dejé: {peluches_deje} 🧸</span>
-    <span class="stat-chip">Traje: {peluches_traje} 🧸</span>
-    <span class="stat-chip">Premios Mec: {premios_mec}</span>
-    <span class="stat-chip">Premios Dig: {premios_dig}</span>
-    <span class="stat-chip">Monedas Mec: {monedas_mec}</span>
-    <span class="stat-chip">Monedas Dig: {monedas_dig}</span>
-    """, unsafe_allow_html=True)
-    st.markdown('</div>', unsafe_allow_html=True)
-
-    st.divider()
-
-
-# ─────────────────────────────────────────────
-# SIDEBAR – NAVEGACIÓN
-# ─────────────────────────────────────────────
-with st.sidebar:
-    st.markdown("""
-    <div style="text-align:center; padding: 10px 0 20px 0;">
-        <div style="font-family:'Rajdhani',sans-serif; font-size:28px; color:#e94560; font-weight:700; letter-spacing:3px;">
-            🎮 MINI GARRA
-        </div>
-        <div style="color:#a0a0c0; font-size:12px; letter-spacing:2px;">CHECKLIST DE MÁQUINAS</div>
+    <div class="resumen-box">
+        <b style="font-family:'Rajdhani',sans-serif;font-size:16px;letter-spacing:1px;">
+            RESUMEN CASILLA {letra}
+        </b><br>
+        <span class="chip chip-red">Serie: {serie if serie else '—'}</span><br>
+        <span class="chip chip-green">Dejé: {p_deje} 🧸</span>
+        <span class="chip chip-green">Traje: {p_traje} 🧸</span><br>
+        <span class="chip chip-red">Premios Mec {letra}: {prem_mec}</span>
+        <span class="chip chip-blue">Premios Dig {letra}: {prem_dig}</span><br>
+        <span class="chip chip-red">Monedas Mec {letra}: {mon_mec}</span>
+        <span class="chip chip-blue">Monedas Dig {letra}: {mon_dig}</span>
+        {prueba_html}
     </div>
     """, unsafe_allow_html=True)
 
-    st.markdown("### 📍 Selecciona Máquina")
+
+# ─────────────────────────────────────────────
+# SIDEBAR
+# ─────────────────────────────────────────────
+with st.sidebar:
+    st.markdown("""
+    <div style="text-align:center;padding:10px 0 20px 0;">
+        <div style="font-family:'Rajdhani',sans-serif;font-size:26px;color:#e94560;font-weight:700;letter-spacing:3px;">
+            🎮 MINI GARRA
+        </div>
+        <div style="color:#a0a0c0;font-size:11px;letter-spacing:2px;">CHECKLIST DE MÁQUINAS</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown("### 📍 Máquina")
     maquina_sel = st.radio(
         "",
         options=["🏬 Cinepolis Galerías", "🏪 Cinepolis Forum Tlaquepaque"],
         key="maquina_radio"
     )
-
     st.divider()
-    st.markdown("### 📅 Fecha")
-    fecha = st.date_input("Fecha de revisión", value=datetime.today(), key="fecha_global")
-    hora = st.time_input("Hora", value=datetime.now().time(), key="hora_global")
-
+    st.markdown("### 📅 Fecha y Hora")
+    fecha = st.date_input("Fecha de revisión", value=datetime.today(), key="fecha_g")
+    hora  = st.time_input("Hora", value=datetime.now().time(), key="hora_g")
     st.divider()
     st.markdown("### 👤 Técnico")
-    tecnico = st.text_input("Nombre del técnico", key="tecnico", placeholder="Tu nombre")
-
+    tecnico = st.text_input("Nombre", key="tecnico", placeholder="Tu nombre")
     st.divider()
-    st.caption("v1.0 · Mini Garra Checklist")
+    st.caption("v2.0 · Mini Garra Checklist")
 
 
 # ─────────────────────────────────────────────
 # HEADER PRINCIPAL
 # ─────────────────────────────────────────────
-maquina_id = "galerias" if "Galerías" in maquina_sel else "forum"
+maquina_id       = "galerias" if "Galerías" in maquina_sel else "forum"
 ubicacion_nombre = "Cinepolis Galerías" if maquina_id == "galerias" else "Cinepolis Forum Tlaquepaque"
-icono = "🏬" if maquina_id == "galerias" else "🏪"
+icono_loc        = "🏬" if maquina_id == "galerias" else "🏪"
 
 st.markdown(f"""
 <div class="maquina-banner">
-    <h2>{icono} {ubicacion_nombre.upper()}</h2>
-    <p>Fecha: {fecha.strftime('%d/%m/%Y')} · Técnico: {tecnico if tecnico else '—'}</p>
+    <h2>{icono_loc} {ubicacion_nombre.upper()}</h2>
+    <p>{fecha.strftime('%d/%m/%Y')} &nbsp;·&nbsp; {hora.strftime('%H:%M')} &nbsp;·&nbsp; {tecnico if tecnico else '—'}</p>
 </div>
 """, unsafe_allow_html=True)
 
-st.markdown(f"### 🎮 Checklist — Mini Garra 4 Casillas")
-st.caption("Completa todos los campos para cada casilla. Las fotos son opcionales pero recomendadas.")
+st.markdown("##### 🎮 Mini Garra · Casillas A · B · C · D")
+st.caption("Toca cada tab para llenar la casilla. Todos los contadores y fotos son independientes por casilla.")
 
 # ─────────────────────────────────────────────
-# TABS POR CASILLA
+# TABS A / B / C / D
 # ─────────────────────────────────────────────
-tab1, tab2, tab3, tab4 = st.tabs([
-    "  Casilla 1  ",
-    "  Casilla 2  ",
-    "  Casilla 3  ",
-    "  Casilla 4  ",
-])
+tab_a, tab_b, tab_c, tab_d = st.tabs(["  A  ", "  B  ", "  C  ", "  D  "])
 
-with tab1:
-    st.markdown('<div class="casilla-card">', unsafe_allow_html=True)
-    casilla_form(maquina_id, 1)
-    st.markdown('</div>', unsafe_allow_html=True)
-
-with tab2:
-    st.markdown('<div class="casilla-card">', unsafe_allow_html=True)
-    casilla_form(maquina_id, 2)
-    st.markdown('</div>', unsafe_allow_html=True)
-
-with tab3:
-    st.markdown('<div class="casilla-card">', unsafe_allow_html=True)
-    casilla_form(maquina_id, 3)
-    st.markdown('</div>', unsafe_allow_html=True)
-
-with tab4:
-    st.markdown('<div class="casilla-card">', unsafe_allow_html=True)
-    casilla_form(maquina_id, 4)
-    st.markdown('</div>', unsafe_allow_html=True)
+with tab_a:
+    casilla_form(maquina_id, "A")
+with tab_b:
+    casilla_form(maquina_id, "B")
+with tab_c:
+    casilla_form(maquina_id, "C")
+with tab_d:
+    casilla_form(maquina_id, "D")
 
 # ─────────────────────────────────────────────
-# BOTÓN DE GUARDAR / EXPORTAR
+# GUARDAR
 # ─────────────────────────────────────────────
 st.divider()
 st.markdown("### 💾 Guardar Checklist")
 
-col_btn1, col_btn2, col_btn3 = st.columns([1, 2, 1])
-with col_btn2:
-    if st.button("✅ GUARDAR CHECKLIST COMPLETO", use_container_width=True):
-        resumen = {
-            "maquina": ubicacion_nombre,
-            "fecha": str(fecha),
-            "hora": str(hora),
-            "tecnico": tecnico,
-            "timestamp": datetime.now().isoformat(),
-        }
-        resumen_json = json.dumps(resumen, ensure_ascii=False, indent=2)
-        st.success(f"✅ Checklist guardado correctamente para **{ubicacion_nombre}**")
-        st.download_button(
-            label="⬇️ Descargar resumen JSON",
-            data=resumen_json,
-            file_name=f"checklist_{maquina_id}_{fecha}.json",
-            mime="application/json",
-            use_container_width=True
-        )
+if st.button("✅ GUARDAR CHECKLIST COMPLETO", use_container_width=True):
+    resumen = {
+        "maquina": ubicacion_nombre,
+        "fecha": str(fecha),
+        "hora": str(hora),
+        "tecnico": tecnico,
+        "timestamp": datetime.now().isoformat(),
+        "casillas": ["A", "B", "C", "D"],
+    }
+    resumen_json = json.dumps(resumen, ensure_ascii=False, indent=2)
+    st.success(f"✅ Checklist guardado — **{ubicacion_nombre}**")
+    st.download_button(
+        label="⬇️ Descargar resumen JSON",
+        data=resumen_json,
+        file_name=f"checklist_{maquina_id}_{fecha}.json",
+        mime="application/json",
+        use_container_width=True,
+    )
+
+st.markdown("""
+<div class="footer-logo">🎮 MINI GARRA CHECKLIST · CINEPOLIS JALISCO · 2025</div>
+""", unsafe_allow_html=True)
 
 # ─────────────────────────────────────────────
 # FOOTER
